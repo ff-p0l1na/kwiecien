@@ -1,0 +1,25 @@
+{% extends 'flashcards/base.html' %}
+
+{% block content %}
+
+<h1> Stworzone fiszki </h1>
+</br>
+
+{% for card in fc_list %}
+
+    <div class="card">
+      <div class="card-header">
+       <strong> {{ card }} </strong>
+      </div>
+          <div class="card-body">
+            <p class="card-text">
+            Tłumaczenie: {{ card.back }}
+                </br>
+            Mnemonik: {{ card.mnemo }}</p>
+          </div>
+    </div>
+
+</br>
+{% endfor %}
+
+{% endblock %}
