@@ -1,0 +1,20 @@
+{% extends 'flashcards/base.html' %}
+
+{% block content %}
+   <h1>Dodaj fiszkę</h1>
+   </br></br>
+   {% if submitted %}
+      <h2>Dodano fiszkę.</h2>
+
+   {% else %}
+
+      <form action="" method=POST>
+         {% csrf_token %}
+
+         {{ form.as_p }}
+
+         <input type="submit" value="Submit" class="btn btn-secondary">
+      </form>
+
+   {% endif %}
+{% endblock %}
