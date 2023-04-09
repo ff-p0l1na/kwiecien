@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from .models import FlashCard
 from .forms import FlashCardAdder
+from django.contrib.auth.decorators import login_required
 
 
 def add_flashcard(request):
@@ -12,6 +13,8 @@ def add_flashcard(request):
     if request.method == "POST":
         form = FlashCardAdder(request.POST)
         if form.is_valid():
+            FlashCard = form.save(commit=False)
+            FlashCard.author = request.user
             form.save()
             return HttpResponseRedirect('/dodaj_fiszke?submitted=True')
     else:
@@ -21,8 +24,9 @@ def add_flashcard(request):
 
     return render(request, 'flashcards/add_flashcard.html', {'form': form, 'submitted': submitted,})
 
+@login_required
 def all_flashcards(request):
-    fc_list = FlashCard.objects.all()
+    fc_list = FlashCard.objects.filter(author=request.user)
     return render(request, 'flashcards/fc_list.html',
                   {'fc_list': fc_list})
 
