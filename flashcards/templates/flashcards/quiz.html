@@ -1,0 +1,54 @@
+{% extends 'flashcards/base.html' %}
+{% block content %}
+
+<h1>Sprawdź się</h1>
+
+</br>
+
+<div class="container">
+    {% if message %}
+
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+    {% endif %}
+
+</div>
+
+{% if flashcards %}
+
+  <form method="POST" action="{% url 'check_answer' %}">
+
+    {% csrf_token %}
+
+    {% for flashcard in flashcards %}
+
+      <div class="card">
+          <div class="card-header">
+                <strong> {{ flashcard.front }} </strong>
+          </div>
+          </br>
+          <div class="card-body">
+              <p class="card-text">
+                  Mnemonik: {{ flashcard.mnemo }}
+                  </br></br>
+                  <input type="text" name="answers[]" required>
+                  <input type="hidden" name="flashcard_ids[]" value="{{ flashcard.id }}">
+              </p>
+          </div>
+    </div>
+</br>
+      {% endfor %}
+</br>
+<input type="submit" value="Sprawdź" class="btn btn-secondary">
+
+</form>
+
+    {% else %}
+        <p>Nic do wyświetlenia.</p>
+
+    {% endif %}
+
+{% endblock %}
