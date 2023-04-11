@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from .models import FlashCard
-from .forms import FlashCardAdder
+from .forms import FlashCardAdder, FlashCardForm
 
 
 def add_flashcard(request):
@@ -62,39 +62,38 @@ def home(request, year=datetime.now().year, month=datetime.now().strftime('%B'))
                                 'time': time,
                                 })
 
-
 @login_required
 def quiz(request):
-    flashcards = FlashCard.objects.filter(author=request.user).order_by('?')[:5]
-    return render(request, 'flashcards/quiz.html', {'flashcards': flashcards})
+    flashcards = FlashCard.objects.all().order_by('?')[:5]
+    form = FlashCardForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            # Handle the user's answers
+            answers = form.cleaned_data['back']
+            correct_answers = 0
+            for i, flashcard in enumerate(flashcards):
+                if i < len(answers):
+                    # Compare the user's answer to the correct answer for this flashcard
+                    if answers[i].lower() == flashcard.back.lower():
+                        correct_answers += 1
+
+            # Add the number of correct answers to the context
+            context = {
+                'flashcards': flashcards,
+                'form': form,
+                'correct_answers': correct_answers
+            }
+
+            # Redirect to a page showing the results
+            return render(request, 'flashcards/quiz_res.html', context)
+
+    context = {
+        'flashcards': flashcards,
+        'form': form,
+    }
+    return render(request, 'flashcards/quiz.html', context)
 
 
-@login_required
-def quiz_submit(request):
-    flashcard_backs = request.POST.getlist('flashcard_backs[]')
-    user_answers = request.POST.getlist('answers[]')
-    flashcards = FlashCard.objects.filter(id__in=flashcard_backs)
-    correct_answers = 0
-    for flashcard, user_answer in zip(flashcards, user_answers):
-        if str(user_answer.strip().lower()) == str(flashcard.back.strip().lower()):
-            correct_answers += 1
-        else:
-            flashcard.correct_answer = str(flashcard.back)
-        flashcard.user_answer = str(user_answer)
-        flashcard.save()
-
-    return redirect('quiz_results', correct_answers=correct_answers)
-
-
-@login_required
-def quiz_results(request, correct_answers):
-    num_questions = 5
-    score = correct_answers / num_questions * 100
-    message = 'Odpowiedziano poprawnie na {} z {} pytań.'.format(correct_answers, num_questions)
-    if score < 60:
-        message = 'Odpowiedziano poprawnie na {} z {} pytań. Zalecam powtórkę słówek.'.format(correct_answers, num_questions)
-    elif score < 80:
-        message = 'Odpowiedziano poprawnie na {} z {} pytań. Nadal może być lepiej.'.format(correct_answers, num_questions)
-    else:
-        message = 'Odpowiedziano poprawnie na {} z {} pytań. Wszystko już umiesz.'.format(correct_answers, num_questions)
-    return render(request, 'flashcards/quiz.html', {'message': message})
+def results(request):
+    return render(request, 'flashcards/quiz_res.html')
