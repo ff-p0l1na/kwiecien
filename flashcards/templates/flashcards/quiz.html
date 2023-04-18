@@ -1,33 +1,46 @@
 {% extends 'flashcards/base.html' %}
 
 {% block content %}
+</br>
 <h1>Sprawdź się</h1>
 </br>
-  <form method="POST">
-    {% csrf_token %}
-
-{% for flashcard in flashcards %}
-
-    <div class="card">
+<h2>Podaj tłumaczenie</h2>
+</br>
+<div class="card">
 
       <div class="card-header">
-       <strong> {{ flashcard.front }} </strong>
+       <strong> {{ flashcard }} </strong>
       </div>
 
           <div class="card-body">
-            <p class="card-text">
 
-            {{ form.as_p }}
+            <p class="card-text">
+              Mnemonik: {{ flashcard.mnemo }} </p>
+            <form method="post" autocomplete="off" action="">
+            {% csrf_token %}
+
+            {% block scripts %}
+            <script>
+            document.querySelector('input[name="back"]').setAttribute('value', '{{ flashcard.back }}');
+            </script>
+
+          {% endblock %}
+
+            <input type="hidden" name="back" value="{{ flashcard.back }}">
+            <input type="text" name="answer" placeholder="Odpowiedź">
+                </br></br>
+            <button type="submit" class="btn btn-secondary">Sprawdź</button>
+
+          </form>
+
           </div>
 
-    </div>
-      </br>
+</div>
 
-
-    {% endfor %}
-</br>
-    <input type="submit" value="Sprawdź" class="btn btn-secondary">
-
-  </form>
-
+{% if message %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+{% endif %}
 {% endblock %}

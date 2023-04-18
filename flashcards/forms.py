@@ -37,13 +37,8 @@ class FlashCardForm(forms.ModelForm):
         model = FlashCard
         fields = ('back',)
 
-    def clean(self):
-        cleaned_data = super().clean()
-        if 'back' in cleaned_data:
-            back = cleaned_data['back']
-            cleaned_data['back'] = [answer.strip() for answer in back.split(';') if answer.strip()]
 
-        return cleaned_data
+
 
 
 

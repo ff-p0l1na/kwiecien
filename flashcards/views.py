@@ -3,7 +3,8 @@ from calendar import HTMLCalendar
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import render
+import random
 from .models import FlashCard
 from .forms import FlashCardAdder, FlashCardForm
 
@@ -62,38 +63,67 @@ def home(request, year=datetime.now().year, month=datetime.now().strftime('%B'))
                                 'time': time,
                                 })
 
-@login_required
+
+# @login_required()
+# def quiz(request):
+#     flashcard = random.choice(FlashCard.objects.all())
+#     if request.method == 'POST':
+#         form = FlashCardForm(request.POST)
+#         if form.is_valid():
+#             user_answer = form.cleaned_data['back']
+#             if user_answer.lower() == flashcard.back.lower():
+#                 message = f"Dobrze! Odpowiedź to: {user_answer}."
+#             else:
+#                 message = f"Źle, poprawna odpowiedź to: {flashcard.back}."
+#         else:
+#             message = "Proszę wprowadzić odpowiedź."
+#         context = {
+#             'flashcard': flashcard,
+#             'message': message,
+#             'form': form,
+#         }
+#     else:
+#         form = FlashCardForm()
+#         context = {
+#             'flashcard': flashcard,
+#             'form': form,
+#         }
+#     return render(request, 'flashcards/quiz.html', context)
+
+@login_required()
 def quiz(request):
-    flashcards = FlashCard.objects.all().order_by('?')[:5]
-    form = FlashCardForm(request.POST or None)
+    # Zapisanie poprzedniego id
+    prev_flashcard_id = request.session.get('prev_flashcard_id')
+    prev_user_answer = request.session.get('prev_user_answer')
+
+    # Losowanie nowej karty bez duplikatu
+    flashcard = random.choice(FlashCard.objects.exclude(id=prev_flashcard_id))
 
     if request.method == 'POST':
+        form = FlashCardForm(request.POST)
         if form.is_valid():
-            # Handle the user's answers
-            answers = form.cleaned_data['back']
-            correct_answers = 0
-            for i, flashcard in enumerate(flashcards):
-                if i < len(answers):
-                    # Compare the user's answer to the correct answer for this flashcard
-                    if answers[i].lower() == flashcard.back.lower():
-                        correct_answers += 1
-
-            # Add the number of correct answers to the context
-            context = {
-                'flashcards': flashcards,
-                'form': form,
-                'correct_answers': correct_answers
-            }
-
-            # Redirect to a page showing the results
-            return render(request, 'flashcards/quiz_res.html', context)
-
-    context = {
-        'flashcards': flashcards,
-        'form': form,
-    }
+            user_answer = form.cleaned_data['back']
+            if user_answer.lower() == flashcard.back.lower():
+                message = f"Dobrze! Odpowiedź to: {user_answer}."
+            else:
+                message = f"Źle, poprawna odpowiedź to: {flashcard.back}."
+            # Zapisanie odpowiedzi w sesji
+            request.session['prev_flashcard_id'] = flashcard.id
+            request.session['prev_user_answer'] = user_answer
+        else:
+            message = "Proszę wprowadzić odpowiedź."
+        context = {
+            'flashcard': flashcard,
+            'message': message,
+            'form': form,
+            'prev_user_answer': prev_user_answer,
+        }
+    else:
+        form = FlashCardForm()
+        context = {
+            'flashcard': flashcard,
+            'form': form,
+            'prev_user_answer': prev_user_answer,
+        }
     return render(request, 'flashcards/quiz.html', context)
 
-
-def results(request):
-    return render(request, 'flashcards/quiz_res.html')
